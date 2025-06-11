@@ -2,15 +2,15 @@ name: ROS 2 CI
 
 on:
   push:
-    branches: [ iron, jazzy ]
+    branches: [ iron ]
   pull_request:
-    branches: [ iron, jazzy]
+    branches: [ iron ]
 
 jobs:
   build_and_test:
     runs-on: ubuntu-22.04
     container:
-        image: rostooling/setup-ros-docker:ubuntu-noble-latest
+        image: rostooling/setup-ros-docker:ubuntu-jammy-latest
     steps:
       - name: Build and run tests
         uses: ros-tooling/action-ros-ci@0.3.7
