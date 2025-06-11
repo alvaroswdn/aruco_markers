@@ -100,7 +100,7 @@ void ArucoMarkersNode::log_marker_ids(const std::vector<int> & ids)
   RCLCPP_INFO(this->get_logger(), "marker ids: %s", ss.str().c_str());
 }
 
-  // Callback for image subscription
+// Callback for image subscription
 void ArucoMarkersNode::image_callback(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
   if (!received_camera_info_) {
@@ -113,13 +113,13 @@ void ArucoMarkersNode::image_callback(const sensor_msgs::msg::Image::ConstShared
   marker_array.header.frame_id = camera_frame_;
 
   try {
-      // Convert ROS image message to OpenCV image
+    // Convert ROS image message to OpenCV image
     cv_bridge::CvImagePtr cv_image_ptr = cv_bridge::toCvCopy(
-        msg,
-        sensor_msgs::image_encodings::BGR8);
+      msg,
+      sensor_msgs::image_encodings::BGR8);
     cv::Mat & image = cv_image_ptr->image;
 
-      // Detect ArUco markers
+    // Detect ArUco markers
     std::vector<int> marker_ids;
     std::vector<std::vector<cv::Point2f>> marker_corners, rejected_candidates;
     cv::Mat dist_coeffs = cv::Mat::zeros(4, 1, CV_64F);
@@ -127,17 +127,17 @@ void ArucoMarkersNode::image_callback(const sensor_msgs::msg::Image::ConstShared
     cv::Mat undistortedImage;
     cv::undistort(image, undistortedImage, camera_matrix_, camera_distortion_);
     cv::aruco::detectMarkers(
-        undistortedImage, aruco_dict_, marker_corners, marker_ids,
-        aruco_parameters_, rejected_candidates);
+      undistortedImage, aruco_dict_, marker_corners, marker_ids,
+      aruco_parameters_, rejected_candidates);
 
     if (!marker_ids.empty()) {
-        // Estimate the pose of the ArUco markers (using solvePnP)
+      // Estimate the pose of the ArUco markers (using solvePnP)
       std::vector<cv::Vec3d> tvecs;
       std::vector<cv::Vec3d> rvecs;
 
       cv::aruco::estimatePoseSingleMarkers(
-          marker_corners, marker_size_, camera_matrix_,
-          camera_distortion_, rvecs, tvecs);
+        marker_corners, marker_size_, camera_matrix_,
+        camera_distortion_, rvecs, tvecs);
 
       if (tvecs.empty() || rvecs.empty()) {
         RCLCPP_WARN(this->get_logger(), "Pose estimation failed for marker.");
@@ -152,7 +152,7 @@ void ArucoMarkersNode::image_callback(const sensor_msgs::msg::Image::ConstShared
           RCLCPP_WARN(this->get_logger(), "tvec is zero");
           continue;
         }
-          // Broadcast transform from 'camera_frame' to 'aruco_marker_<id>'
+        // Broadcast transform from 'camera_frame' to 'aruco_marker_<id>'
         geometry_msgs::msg::TransformStamped marker_transform;
         marker_transform.header.stamp = this->get_clock()->now();
         marker_transform.header.frame_id = camera_frame_;                                              // Parent frame
@@ -161,8 +161,8 @@ void ArucoMarkersNode::image_callback(const sensor_msgs::msg::Image::ConstShared
         marker_transform.transform.translation.y = tvec[1];
         marker_transform.transform.translation.z = tvec[2];
 
-          // RCLCPP_INFO(this->get_logger(), "detected marker: %d", marker_ids[i]);
-          // logVec3d(tvec, "tvec");
+        // RCLCPP_INFO(this->get_logger(), "detected marker: %d", marker_ids[i]);
+        // logVec3d(tvec, "tvec");
 
         tf2::Quaternion quaternion;
         cv::Mat rotation_matrix;
@@ -183,7 +183,7 @@ void ArucoMarkersNode::image_callback(const sensor_msgs::msg::Image::ConstShared
 
         tf_broadcaster_->sendTransform(marker_transform);
 
-          // Convert to geometry_msgs::Pose
+        // Convert to geometry_msgs::Pose
         geometry_msgs::msg::PoseStamped marker_pose;
         marker_pose.header.stamp = msg->header.stamp;
         marker_pose.header.frame_id = camera_frame_;
@@ -195,7 +195,7 @@ void ArucoMarkersNode::image_callback(const sensor_msgs::msg::Image::ConstShared
         marker_pose.pose.orientation.z = marker_transform.transform.rotation.z;
         marker_pose.pose.orientation.w = marker_transform.transform.rotation.w;
 
-          // Populate Marker message
+        // Populate Marker message
         aruco_markers_msgs::msg::Marker marker;
         marker.header.frame_id = camera_frame_;
         marker.header.stamp = msg->header.stamp;
@@ -204,24 +204,24 @@ void ArucoMarkersNode::image_callback(const sensor_msgs::msg::Image::ConstShared
         marker.pixel_x = marker_corners[i][0].x;
         marker.pixel_y = marker_corners[i][0].y;
 
-          // Add marker to array
+        // Add marker to array
         marker_array.markers.push_back(marker);
 
-          // Draw 3D axis on the marker in the image
+        // Draw 3D axis on the marker in the image
         cv::drawFrameAxes(
-            image, camera_matrix_, camera_distortion_, rvec, tvec,
-            marker_size_ * 0.7f);
+          image, camera_matrix_, camera_distortion_, rvec, tvec,
+          marker_size_ * 0.7f);
         draw3dAxis(image, tvec, rvec, 1);
       }
 
       cv::aruco::drawDetectedMarkers(image, marker_corners, marker_ids);
     }
 
-      // Convert OpenCV image back to ROS message
+    // Convert OpenCV image back to ROS message
     auto overlay_msg = cv_bridge::CvImage(msg->header, "bgr8", image).toImageMsg();
     image_pub_->publish(*overlay_msg);
 
-      // Publish the marker array
+    // Publish the marker array
     if (!marker_array.markers.empty()) {
       marker_array_pub_->publish(marker_array);
     }
