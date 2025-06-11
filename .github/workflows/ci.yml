@@ -2,9 +2,9 @@ name: ROS 2 CI
 
 on:
   push:
-    branches: [ iron, jazzy ]
+    branches: [ jazzy ]
   pull_request:
-    branches: [ iron, jazzy]
+    branches: [ jazzy]
 
 jobs:
   build_and_test:
@@ -15,4 +15,4 @@ jobs:
       - name: Build and run tests
         uses: ros-tooling/action-ros-ci@0.3.7
         with:
-          target-ros2-distro: iron
+          target-ros2-distro: rolling
