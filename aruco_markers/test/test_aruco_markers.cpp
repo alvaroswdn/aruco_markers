@@ -65,7 +65,7 @@ TEST_F(ArucoMarkersNodeTest, testProcessCameraInfo)
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       EXPECT_DOUBLE_EQ(
-        expected_camera_matrix.at<double>(i, j), node->camera_matrix_.at<double>(
+        expected_camera_matrix.at<double>(i, j), node->getCameraMatrix().at<double>(
           i,
           j));
     }
@@ -75,10 +75,10 @@ TEST_F(ArucoMarkersNodeTest, testProcessCameraInfo)
   for (int i = 0; i < 5; ++i) {
     EXPECT_DOUBLE_EQ(
       expected_distortion.at<double>(0, i),
-      node->camera_distortion_.at<double>(0, i));
+      node->getCameraDistortion().at<double>(0, i));
   }
 
-  EXPECT_TRUE(node->received_camera_info_);
+  EXPECT_TRUE(node->hasReceivedCameraInfo());
 }
 
 int main(int argc, char ** argv)

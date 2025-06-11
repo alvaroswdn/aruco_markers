@@ -23,15 +23,27 @@
 
 using namespace std::chrono_literals;
 
-// Forward declare test class for friend declaration
-class ArucoMarkersNodeTest;
-
 class ArucoMarkersNode : public rclcpp::Node
 {
 public:
   ArucoMarkersNode();
   void initialize();
   void process_camera_info(const sensor_msgs::msg::CameraInfo & msg);
+
+  bool hasReceivedCameraInfo() const
+  {
+    return received_camera_info_;
+  }
+
+  cv::Mat getCameraMatrix() const
+  {
+    return camera_matrix_;
+  }
+
+  cv::Mat getCameraDistortion() const
+  {
+    return camera_distortion_;
+  }
 
 private:
   void log_marker_ids(const std::vector<int> & ids);
@@ -70,9 +82,6 @@ private:
   std::string dictionary_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
-
-  // Declare test class as friend to allow access to private members
-  friend class ArucoMarkersNodeTest;
 };
 
 #endif // ARUCO_MARKERS_HPP_
