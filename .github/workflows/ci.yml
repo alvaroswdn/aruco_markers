@@ -30,12 +30,12 @@ jobs:
           - ros-distro: rolling
             branch: rolling
       fail-fast: false
-    # Only run the job if the branch matches the matrix branch
-    if: github.event_name == 'push' || github.event.pull_request.base.ref == matrix.branch
+    # Run only if the branch matches the matrix branch for push or pull request
+    if: github.ref_name == matrix.ros-distro.branch || github.base_ref == matrix.ros-distro.branch
     container:
-      image: ${{ matrix.image }}
+      image: ${{ matrix.ros-distro.image }}
     steps:
       - name: Build and run tests
         uses: ros-tooling/action-ros-ci@0.3.7
         with:
-          target-ros2-distro: ${{ matrix.distro }}
+          target-ros2-distro: ${{ matrix.ros-distro.distro }}
