@@ -2,17 +2,40 @@ name: ROS 2 CI
 
 on:
   push:
-    branches: [ humble ]
+    branches: [ humble, iron, jazzy, rolling ]
   pull_request:
-    branches: [ humble ]
+    branches: [ humble, iron, jazzy, rolling ]
 
 jobs:
   build_and_test:
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        ros-distro:
+          - distro: humble
+            image: rostooling/setup-ros-docker:ubuntu-jammy-latest
+          - distro: iron
+            image: rostooling/setup-ros-docker:ubuntu-jammy-latest
+          - distro: jazzy
+            image: rostooling/setup-ros-docker:ubuntu-noble-latest
+          - distro: rolling
+            image: rostooling/setup-ros-docker:ubuntu-noble-latest
+        include:
+          - ros-distro: humble
+            branch: humble
+          - ros-distro: iron
+            branch: iron
+          - ros-distro: jazzy
+            branch: jazzy
+          - ros-distro: rolling
+            branch: rolling
+      fail-fast: false
+    # Only run the job if the branch matches the matrix branch
+    if: github.event_name == 'push' || github.event.pull_request.base.ref == matrix.branch
     container:
-        image: rostooling/setup-ros-docker:ubuntu-jammy-latest
+      image: ${{ matrix.image }}
     steps:
       - name: Build and run tests
         uses: ros-tooling/action-ros-ci@0.3.7
         with:
-          target-ros2-distro: humble
+          target-ros2-distro: ${{ matrix.distro }}
