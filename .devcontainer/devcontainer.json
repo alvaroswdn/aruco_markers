@@ -32,6 +32,9 @@
     "vscode": {
       "settings": {},
       "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.makefile-tools"
       ]
     }
   }

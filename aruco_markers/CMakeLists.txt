@@ -47,17 +47,6 @@ target_include_directories(aruco_markers PUBLIC
   ${OpenCV_INCLUDE_DIRS}
 )
 target_link_libraries(aruco_markers aruco_markers_lib ${OpenCV_LIBRARIES})
-ament_target_dependencies(aruco_markers
-  rclcpp
-  std_msgs
-  sensor_msgs
-  image_transport
-  cv_bridge
-  tf2_ros
-  geometry_msgs
-  aruco_markers_msgs
-  tf2_geometry_msgs
-)
 
 # Install targets
 install(TARGETS aruco_markers_lib
@@ -88,16 +77,6 @@ if(BUILD_TESTING)
     ${OpenCV_INCLUDE_DIRS}
   )
   target_link_libraries(test_aruco_markers aruco_markers_lib ${OpenCV_LIBRARIES})
-  ament_target_dependencies(test_aruco_markers
-    rclcpp
-    std_msgs
-    sensor_msgs
-    cv_bridge
-    image_transport
-    tf2_ros
-    aruco_markers_msgs
-    tf2_geometry_msgs
-  )
 endif()
 
 ament_package()
