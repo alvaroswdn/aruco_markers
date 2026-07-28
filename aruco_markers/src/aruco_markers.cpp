@@ -24,6 +24,13 @@ ArucoMarkersNode::ArucoMarkersNode()
   RCLCPP_INFO(this->get_logger(), "image_topic: %s", image_topic_.c_str());
   RCLCPP_INFO(this->get_logger(), "camera_info_topic: %s", camera_info_topic_.c_str());
   RCLCPP_INFO(this->get_logger(), "dictionary: %s", dictionary_.c_str());
+
+  RCLCPP_INFO(this->get_logger(), "adaptive_thresh_win_size_min: %d", adaptive_thresh_win_size_min_);
+  RCLCPP_INFO(this->get_logger(), "adaptive_thresh_win_size_max: %d", adaptive_thresh_win_size_max_);
+  RCLCPP_INFO(this->get_logger(), "adaptive_thresh_win_size_step: %d", adaptive_thresh_win_size_step_);
+  RCLCPP_INFO(this->get_logger(), "adaptive_thresh_constant: %f", adaptive_thresh_constant_);
+  RCLCPP_INFO(this->get_logger(), "polygonal_approx_accuracy_rate: %f", polygonal_approx_accuracy_rate_);
+  RCLCPP_INFO(this->get_logger(), "corner_refinement_max_iterations: %d", corner_refinement_max_iterations_);
 }
 
 void ArucoMarkersNode::initialize()
@@ -49,7 +56,17 @@ void ArucoMarkersNode::initialize()
 
   // Set up ArUco marker detector
   aruco_dict_ = cv::aruco::getPredefinedDictionary(utils::dictNameToEnum(dictionary_));
-  aruco_parameters_ = cv::aruco::DetectorParameters::create();
+  aruco_parameters_ = cv::aruco::DetectorParameters();
+
+  aruco_parameters_.adaptiveThreshWinSizeMin = adaptive_thresh_win_size_min_;
+  aruco_parameters_.adaptiveThreshWinSizeMax = adaptive_thresh_win_size_max_;
+  aruco_parameters_.adaptiveThreshWinSizeStep = adaptive_thresh_win_size_step_;
+  aruco_parameters_.adaptiveThreshConstant = adaptive_thresh_constant_; // Increased to cut through gloss
+
+  aruco_parameters_.polygonalApproxAccuracyRate = polygonal_approx_accuracy_rate_; // Increased flexibility for jagged edges
+
+  aruco_parameters_.cornerRefinementMethod = cv::aruco::CORNER_REFINE_SUBPIX;
+  aruco_parameters_.cornerRefinementMaxIterations = corner_refinement_max_iterations_;
 
   RCLCPP_INFO(this->get_logger(), "Waiting for camera info.");
   sensor_msgs::msg::CameraInfo camera_info;
@@ -121,18 +138,26 @@ void ArucoMarkersNode::image_callback(const sensor_msgs::msg::Image::ConstShared
     std::vector<int> marker_ids;
     std::vector<std::vector<cv::Point2f>> marker_corners, rejected_candidates;
     cv::Mat dist_coeffs = cv::Mat::zeros(4, 1, CV_64F);
-    cv::aruco::detectMarkers(
-      image, aruco_dict_, marker_corners, marker_ids, aruco_parameters_,
-      rejected_candidates, camera_matrix_, camera_distortion_);
+    cv::aruco::ArucoDetector detector(aruco_dict_, aruco_parameters_);
+    detector.detectMarkers(image, marker_corners, marker_ids, rejected_candidates);
 
     if (!marker_ids.empty()) {
       // Estimate the pose of the ArUco markers (using solvePnP)
       std::vector<cv::Vec3d> tvecs;
       std::vector<cv::Vec3d> rvecs;
 
-      cv::aruco::estimatePoseSingleMarkers(
-        marker_corners, marker_size_, camera_matrix_,
-        camera_distortion_, rvecs, tvecs);
+      float half_size_aruco = marker_size_ / 2.0f;
+    std::vector<cv::Point3f> objPoints_aruco = {
+        cv::Point3f(-half_size_aruco, half_size_aruco, 0),
+        cv::Point3f(half_size_aruco, half_size_aruco, 0),
+        cv::Point3f(half_size_aruco, -half_size_aruco, 0),
+        cv::Point3f(-half_size_aruco, -half_size_aruco, 0)
+    };
+    rvecs.resize(marker_corners.size());
+    tvecs.resize(marker_corners.size());
+    for (size_t i = 0; i < marker_corners.size(); i++) {
+        cv::solvePnP(objPoints_aruco, marker_corners[i], camera_matrix_, camera_distortion_, rvecs[i], tvecs[i]);
+    }
 
       if (tvecs.empty() || rvecs.empty()) {
         RCLCPP_WARN(this->get_logger(), "Pose estimation failed for marker.");
@@ -200,7 +225,7 @@ void ArucoMarkersNode::image_callback(const sensor_msgs::msg::Image::ConstShared
         marker_array.markers.push_back(marker);
 
         // Draw 3D axis on the marker in the image
-        cv::aruco::drawAxis(
+        cv::drawFrameAxes(
           image, camera_matrix_, camera_distortion_, rvec, tvec,
           marker_size_ * 0.7f);
         draw3dAxis(image, tvec, rvec, 1);
