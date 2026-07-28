@@ -81,6 +81,14 @@ private:
   std::string image_topic_;
   std::string camera_info_topic_;
   std::string dictionary_;
+
+  int adaptive_thresh_win_size_min_;
+  int adaptive_thresh_win_size_max_;
+  int adaptive_thresh_win_size_step_;
+  double adaptive_thresh_constant_;
+  double polygonal_approx_accuracy_rate_;
+  int corner_refinement_max_iterations_;
+
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 };

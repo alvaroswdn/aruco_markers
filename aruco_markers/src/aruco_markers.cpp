@@ -13,11 +13,25 @@ ArucoMarkersNode::ArucoMarkersNode()
   this->declare_parameter("camera_info_topic", "camera/color/camera_info");
   this->declare_parameter("dictionary", "DICT_ARUCO_ORIGINAL");
 
+  this->declare_parameter("adaptive_thresh_win_size_min", 3);
+  this->declare_parameter("adaptive_thresh_win_size_max", 23);
+  this->declare_parameter("adaptive_thresh_win_size_step", 10);
+  this->declare_parameter("adaptive_thresh_constant", 12.0);
+  this->declare_parameter("polygonal_approx_accuracy_rate", 0.12);
+  this->declare_parameter("corner_refinement_max_iterations", 30);
+
   marker_size_ = this->get_parameter("marker_size").as_double();
   camera_frame_ = this->get_parameter("camera_frame").as_string();
   image_topic_ = this->get_parameter("image_topic").as_string();
   camera_info_topic_ = this->get_parameter("camera_info_topic").as_string();
   dictionary_ = this->get_parameter("dictionary").as_string();
+
+  adaptive_thresh_win_size_min_ = this->get_parameter("adaptive_thresh_win_size_min").as_int();
+  adaptive_thresh_win_size_max_ = this->get_parameter("adaptive_thresh_win_size_max").as_int();
+  adaptive_thresh_win_size_step_ = this->get_parameter("adaptive_thresh_win_size_step").as_int();
+  adaptive_thresh_constant_ = this->get_parameter("adaptive_thresh_constant").as_double();
+  polygonal_approx_accuracy_rate_ = this->get_parameter("polygonal_approx_accuracy_rate").as_double();
+  corner_refinement_max_iterations_ = this->get_parameter("corner_refinement_max_iterations").as_int();
 
   RCLCPP_INFO(this->get_logger(), "marker_size: %f", marker_size_);
   RCLCPP_INFO(this->get_logger(), "camera_frame: %s", camera_frame_.c_str());
@@ -61,9 +75,9 @@ void ArucoMarkersNode::initialize()
   aruco_parameters_.adaptiveThreshWinSizeMin = adaptive_thresh_win_size_min_;
   aruco_parameters_.adaptiveThreshWinSizeMax = adaptive_thresh_win_size_max_;
   aruco_parameters_.adaptiveThreshWinSizeStep = adaptive_thresh_win_size_step_;
-  aruco_parameters_.adaptiveThreshConstant = adaptive_thresh_constant_; // Increased to cut through gloss
+  aruco_parameters_.adaptiveThreshConstant = adaptive_thresh_constant_;
 
-  aruco_parameters_.polygonalApproxAccuracyRate = polygonal_approx_accuracy_rate_; // Increased flexibility for jagged edges
+  aruco_parameters_.polygonalApproxAccuracyRate = polygonal_approx_accuracy_rate_;
 
   aruco_parameters_.cornerRefinementMethod = cv::aruco::CORNER_REFINE_SUBPIX;
   aruco_parameters_.cornerRefinementMaxIterations = corner_refinement_max_iterations_;
